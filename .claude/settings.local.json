@@ -4,7 +4,13 @@
       "Bash(python3:*)",
       "Bash(echo:*)",
       "Bash(python:*)",
-      "mcp__db__get_schema"
+      "mcp__db__get_schema",
+      "mcp__db__execute_query",
+      "Bash(npx vite build:*)",
+      "mcp__chrome-devtools__navigate_page",
+      "mcp__chrome-devtools__take_screenshot",
+      "Bash(pnpm add vue-draggable-plus)",
+      "Bash(npm install:*)"
     ]
   }
 }

@@ -1,30 +1,73 @@
 <script setup>
-import HelloWorld from './components/HelloWorld.vue'
+import { ref, onMounted, provide } from 'vue'
+import { getMe } from './api.js'
+import LoginPage from './components/LoginPage.vue'
+import NavPage from './components/NavPage.vue'
+
+const token = ref(localStorage.getItem('nav_token') || '')
+const user = ref(null)
+const loading = ref(true)
+
+provide('token', token)
+provide('user', user)
+
+async function checkAuth() {
+  if (!token.value) {
+    loading.value = false
+    return
+  }
+  try {
+    const res = await getMe(token.value)
+    user.value = res.user
+  } catch {
+    token.value = ''
+    localStorage.removeItem('nav_token')
+  }
+  loading.value = false
+}
+
+function onLogin(data) {
+  token.value = data.token
+  user.value = data.user
+  localStorage.setItem('nav_token', data.token)
+}
+
+function onLogout() {
+  token.value = ''
+  user.value = null
+  localStorage.removeItem('nav_token')
+  localStorage.removeItem('nav_user_id')
+}
+
+onMounted(checkAuth)
 </script>
 
 <template>
-  <div>
-    <a href="https://vite.dev" target="_blank">
-      <img src="/vite.svg" class="logo" alt="Vite logo" />
-    </a>
-    <a href="https://vuejs.org/" target="_blank">
-      <img src="./assets/vue.svg" class="logo vue" alt="Vue logo" />
-    </a>
+  <div v-if="loading" class="loading-screen">
+    <div class="spinner"></div>
   </div>
-  <HelloWorld msg="Vite + Vue" />
+  <LoginPage v-else-if="!user" @login="onLogin" />
+  <NavPage v-else @logout="onLogout" />
 </template>
 
 <style scoped>
-.logo {
-  height: 6em;
-  padding: 1.5em;
-  will-change: filter;
-  transition: filter 300ms;
+.loading-screen {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
 }
-.logo:hover {
-  filter: drop-shadow(0 0 2em #646cffaa);
+.spinner {
+  width: 32px;
+  height: 32px;
+  border: 3px solid var(--color-border);
+  border-top-color: var(--color-accent);
+  border-radius: 50%;
+  animation: spin 0.6s linear infinite;
 }
-.logo.vue:hover {
-  filter: drop-shadow(0 0 2em #42b883aa);
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
 }
 </style>
