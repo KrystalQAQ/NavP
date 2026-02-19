@@ -1,0 +1,10 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(python3:*)",
+      "Bash(echo:*)",
+      "Bash(python:*)",
+      "mcp__db__get_schema"
+    ]
+  }
+}
