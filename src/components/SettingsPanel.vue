@@ -1,5 +1,5 @@
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, nextTick } from 'vue'
 import { uploadFile } from '../api.js'
 
 const props = defineProps({
@@ -16,6 +16,7 @@ const bgOverlay = ref(30)
 const uploading = ref(false)
 const uploadError = ref('')
 const fileInput = ref(null)
+const visible = ref(false)
 
 const presetColors = [
   { color: '#F5F5F4', name: '默认灰' },
@@ -36,6 +37,9 @@ onMounted(() => {
   bgColor.value = props.settings.bg_color || '#F5F5F4'
   bgImage.value = props.settings.bg_image || ''
   bgOverlay.value = Number(props.settings.bg_overlay) || 30
+  nextTick(() => {
+    visible.value = true
+  })
 })
 
 function selectPresetColor(color) {
@@ -77,149 +81,192 @@ function handleSubmit() {
   })
 }
 
+function handleClose() {
+  visible.value = false
+  setTimeout(() => emit('close'), 200)
+}
+
 function handleOverlayClick(e) {
-  if (e.target === e.currentTarget) emit('close')
+  if (e.target === e.currentTarget) handleClose()
 }
 </script>
 
 <template>
-  <div class="modal-overlay" @click="handleOverlayClick" @keydown.esc="emit('close')">
-    <div class="modal" role="dialog" aria-labelledby="settings-title">
-      <div class="modal-header">
-        <h2 id="settings-title">背景设置</h2>
-        <button class="close-btn" @click="emit('close')" aria-label="关闭">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="M18 6 6 18M6 6l12 12" />
-          </svg>
-        </button>
-      </div>
-
-      <div class="modal-body">
-        <!-- Background type -->
-        <div class="form-group">
-          <label class="form-label">背景类型</label>
-          <div class="type-tabs">
-            <button
-              class="type-tab"
-              :class="{ active: bgType === 'default' }"
-              @click="bgType = 'default'"
-            >
-              默认
-            </button>
-            <button
-              class="type-tab"
-              :class="{ active: bgType === 'color' }"
-              @click="bgType = 'color'"
-            >
-              纯色
-            </button>
-            <button
-              class="type-tab"
-              :class="{ active: bgType === 'image' }"
-              @click="bgType = 'image'"
-            >
-              图片
-            </button>
-          </div>
-        </div>
-
-        <!-- Color picker -->
-        <div v-if="bgType === 'color'" class="form-group">
-          <label class="form-label">选择颜色</label>
-          <div class="color-row">
-            <input type="color" v-model="bgColor" class="color-picker" />
-            <span class="color-hex">{{ bgColor }}</span>
-          </div>
-          <div class="preset-colors">
-            <button
-              v-for="preset in presetColors"
-              :key="preset.color"
-              class="preset-swatch"
-              :class="{ active: bgColor === preset.color }"
-              :style="{ background: preset.color }"
-              :title="preset.name"
-              @click="selectPresetColor(preset.color)"
-            >
-              <svg
-                v-if="bgColor === preset.color"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                stroke-width="3"
-                class="check-icon"
-              >
-                <polyline points="20 6 9 17 4 12" />
+  <Transition name="overlay">
+    <div
+      v-if="visible"
+      class="modal-overlay"
+      @click="handleOverlayClick"
+      @keydown.esc="handleClose"
+    >
+      <Transition name="modal" appear>
+        <div class="modal" role="dialog" aria-labelledby="settings-title">
+          <div class="accent-bar"></div>
+          <div class="modal-header">
+            <h2 id="settings-title">背景设置</h2>
+            <button class="close-btn" @click="handleClose" aria-label="关闭">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M18 6 6 18M6 6l12 12" />
               </svg>
             </button>
           </div>
+
+          <div class="modal-body">
+            <!-- Background type -->
+            <div class="form-group">
+              <label class="form-label">背景类型</label>
+              <div class="type-tabs">
+                <button
+                  class="type-tab"
+                  :class="{ active: bgType === 'default' }"
+                  @click="bgType = 'default'"
+                >
+                  默认
+                </button>
+                <button
+                  class="type-tab"
+                  :class="{ active: bgType === 'color' }"
+                  @click="bgType = 'color'"
+                >
+                  纯色
+                </button>
+                <button
+                  class="type-tab"
+                  :class="{ active: bgType === 'image' }"
+                  @click="bgType = 'image'"
+                >
+                  图片
+                </button>
+              </div>
+            </div>
+
+            <!-- Color picker -->
+            <div v-if="bgType === 'color'" class="form-group">
+              <label class="form-label">选择颜色</label>
+              <div class="color-row">
+                <input type="color" v-model="bgColor" class="color-picker" />
+                <span class="color-hex">{{ bgColor }}</span>
+              </div>
+              <div class="preset-colors">
+                <button
+                  v-for="preset in presetColors"
+                  :key="preset.color"
+                  class="preset-swatch"
+                  :class="{ active: bgColor === preset.color }"
+                  :style="{ background: preset.color }"
+                  :title="preset.name"
+                  @click="selectPresetColor(preset.color)"
+                >
+                  <svg
+                    v-if="bgColor === preset.color"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="3"
+                    class="check-icon"
+                  >
+                    <polyline points="20 6 9 17 4 12" />
+                  </svg>
+                </button>
+              </div>
+            </div>
+
+            <!-- Image URL + Upload -->
+            <div v-if="bgType === 'image'" class="form-group">
+              <label class="form-label">图片地址</label>
+              <div class="img-input-row">
+                <input
+                  v-model="bgImage"
+                  type="text"
+                  class="text-input"
+                  placeholder="https://example.com/bg.jpg"
+                  @input="onImgInput"
+                />
+                <button
+                  class="btn-upload"
+                  :disabled="uploading"
+                  @click="fileInput?.click()"
+                >
+                  <svg v-if="!uploading" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="upload-icon">
+                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                    <polyline points="17 8 12 3 7 8" />
+                    <line x1="12" y1="3" x2="12" y2="15" />
+                  </svg>
+                  <span v-if="uploading" class="upload-spinner"></span>
+                  {{ uploading ? '上传中' : '上传' }}
+                </button>
+                <input
+                  ref="fileInput"
+                  type="file"
+                  accept="image/*"
+                  style="display: none"
+                  @change="handleFileUpload"
+                />
+              </div>
+              <div v-if="uploadError" class="img-error">{{ uploadError }}</div>
+              <div v-if="bgImage.trim() && !imgPreviewError" class="img-preview">
+                <img
+                  :src="bgImage"
+                  alt="背景预览"
+                  @error="imgPreviewError = true"
+                />
+              </div>
+              <div v-if="imgPreviewError" class="img-error">图片加载失败，请检查地址</div>
+
+              <label class="form-label" style="margin-top: 16px">蒙层透明度</label>
+              <div class="slider-row">
+                <input
+                  type="range"
+                  v-model.number="bgOverlay"
+                  min="0"
+                  max="80"
+                  step="5"
+                  class="slider"
+                />
+                <span class="slider-value">{{ bgOverlay }}%</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="modal-footer">
+            <button class="btn-cancel" @click="handleClose">取消</button>
+            <button class="btn-save" @click="handleSubmit">保存</button>
+          </div>
         </div>
-
-        <!-- Image URL + Upload -->
-        <div v-if="bgType === 'image'" class="form-group">
-          <label class="form-label">图片地址</label>
-          <div class="img-input-row">
-            <input
-              v-model="bgImage"
-              type="text"
-              class="text-input"
-              placeholder="https://example.com/bg.jpg"
-              @input="onImgInput"
-            />
-            <button
-              class="btn-upload"
-              :disabled="uploading"
-              @click="fileInput?.click()"
-            >
-              <svg v-if="!uploading" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="upload-icon">
-                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-                <polyline points="17 8 12 3 7 8" />
-                <line x1="12" y1="3" x2="12" y2="15" />
-              </svg>
-              <span v-if="uploading" class="upload-spinner"></span>
-              {{ uploading ? '上传中' : '上传' }}
-            </button>
-            <input
-              ref="fileInput"
-              type="file"
-              accept="image/*"
-              style="display: none"
-              @change="handleFileUpload"
-            />
-          </div>
-          <div v-if="uploadError" class="img-error">{{ uploadError }}</div>
-          <div v-if="bgImage.trim() && !imgPreviewError" class="img-preview">
-            <img
-              :src="bgImage"
-              alt="背景预览"
-              @error="imgPreviewError = true"
-            />
-          </div>
-          <div v-if="imgPreviewError" class="img-error">图片加载失败，请检查地址</div>
-
-          <label class="form-label" style="margin-top: 16px">蒙层透明度</label>
-          <div class="slider-row">
-            <input
-              type="range"
-              v-model.number="bgOverlay"
-              min="0"
-              max="80"
-              step="5"
-              class="slider"
-            />
-            <span class="slider-value">{{ bgOverlay }}%</span>
-          </div>
-        </div>
-      </div>
-
-      <div class="modal-footer">
-        <button class="btn-cancel" @click="emit('close')">取消</button>
-        <button class="btn-save" @click="handleSubmit">保存</button>
-      </div>
+      </Transition>
     </div>
-  </div>
+  </Transition>
 </template>
 
 <style scoped>
+/* Overlay transitions */
+.overlay-enter-active {
+  transition: opacity 0.2s ease;
+}
+.overlay-leave-active {
+  transition: opacity 0.15s ease;
+}
+.overlay-enter-from,
+.overlay-leave-to {
+  opacity: 0;
+}
+
+/* Modal transitions */
+.modal-enter-active {
+  transition: opacity 0.25s cubic-bezier(0.16, 1, 0.3, 1), transform 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.modal-leave-active {
+  transition: opacity 0.15s ease, transform 0.15s ease;
+}
+.modal-enter-from {
+  opacity: 0;
+  transform: scale(0.95) translateY(10px);
+}
+.modal-leave-to {
+  opacity: 0;
+  transform: scale(0.95);
+}
+
 .modal-overlay {
   position: fixed;
   inset: 0;
@@ -233,11 +280,24 @@ function handleOverlayClick(e) {
 }
 .modal {
   background: var(--color-surface);
-  border-radius: var(--radius-lg);
+  border-radius: var(--radius-xl);
   width: 100%;
   max-width: 440px;
+  max-height: 90vh;
   box-shadow: var(--shadow-lg);
   overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+}
+.accent-bar {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: linear-gradient(90deg, var(--color-accent), var(--color-accent-hover));
+  z-index: 1;
 }
 .modal-header {
   display: flex;
@@ -270,6 +330,8 @@ function handleOverlayClick(e) {
 }
 .modal-body {
   padding: 20px 24px;
+  overflow-y: auto;
+  flex: 1;
 }
 .form-group {
   margin-bottom: 20px;
@@ -382,7 +444,7 @@ function handleOverlayClick(e) {
   gap: 4px;
   padding: 0 14px;
   border: 1px solid var(--color-border);
-  border-radius: var(--radius-sm);
+  border-radius: var(--radius-md);
   font-size: 0.85rem;
   font-weight: 500;
   color: var(--color-text-secondary);
@@ -416,14 +478,14 @@ function handleOverlayClick(e) {
 }
 .text-input {
   width: 100%;
-  padding: 9px 12px;
+  padding: 10px 14px;
   border: 1px solid var(--color-border);
-  border-radius: var(--radius-sm);
+  border-radius: var(--radius-md);
   font-size: 0.9rem;
   color: var(--color-text);
   background: var(--color-surface);
   outline: none;
-  transition: border-color var(--transition);
+  transition: border-color var(--transition), box-shadow var(--transition);
 }
 .text-input:focus {
   border-color: var(--color-accent);
@@ -433,7 +495,7 @@ function handleOverlayClick(e) {
 /* Image preview */
 .img-preview {
   margin-top: 10px;
-  border-radius: var(--radius-sm);
+  border-radius: var(--radius-md);
   overflow: hidden;
   border: 1px solid var(--color-border);
   max-height: 140px;
@@ -502,7 +564,7 @@ function handleOverlayClick(e) {
 .btn-cancel {
   padding: 9px 20px;
   border: 1px solid var(--color-border);
-  border-radius: var(--radius-sm);
+  border-radius: var(--radius-md);
   color: var(--color-text-secondary);
   font-weight: 500;
   font-size: 0.9rem;
@@ -517,19 +579,48 @@ function handleOverlayClick(e) {
   background: var(--color-primary);
   color: #fff;
   border: none;
-  border-radius: var(--radius-sm);
+  border-radius: var(--radius-md);
   font-weight: 600;
   font-size: 0.9rem;
   cursor: pointer;
-  transition: background var(--transition);
+  transition: background var(--transition), transform var(--transition-fast);
 }
 .btn-save:hover {
   background: var(--color-accent);
 }
+.btn-save:active {
+  transform: scale(0.97);
+}
 
 @media (max-width: 500px) {
+  .modal-overlay {
+    align-items: flex-end;
+    padding: 0;
+  }
   .modal {
     max-width: 100%;
+    border-radius: var(--radius-xl) var(--radius-xl) 0 0;
+    max-height: 90vh;
+  }
+  .modal-enter-from {
+    opacity: 0;
+    transform: translateY(100%);
+  }
+  .modal-leave-to {
+    opacity: 0;
+    transform: translateY(100%);
+  }
+  .modal-enter-active {
+    transition: opacity 0.25s ease, transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+  .modal-leave-active {
+    transition: opacity 0.15s ease, transform 0.2s ease;
+  }
+  .text-input {
+    padding: 12px 14px;
+  }
+  .modal-body {
+    padding: 20px 20px;
   }
 }
 </style>

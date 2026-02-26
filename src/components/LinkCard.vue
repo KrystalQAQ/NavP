@@ -49,7 +49,7 @@ function handleClick() {
 </script>
 
 <template>
-  <div class="card" @click="handleClick">
+  <div class="card" :class="{ 'card--pinned': link.pinned }" @click="handleClick">
     <div class="card-header">
       <div class="icon-wrapper">
         <img
@@ -121,13 +121,23 @@ function handleClick() {
   border-radius: var(--radius-md);
   padding: 16px;
   cursor: pointer;
-  transition: border-color var(--transition), box-shadow var(--transition);
+  transition: border-color var(--transition-slow), box-shadow var(--transition-slow), transform var(--transition-slow);
   overflow: hidden;
 }
 .card:hover {
   border-color: var(--color-border-hover);
   box-shadow: var(--shadow-md);
+  transform: translateY(-2px);
 }
+.card:active {
+  transform: translateY(0);
+}
+
+/* Pinned card accent bar */
+.card--pinned {
+  border-left: 3px solid var(--color-accent);
+}
+
 .card-header {
   display: flex;
   align-items: center;
@@ -135,18 +145,23 @@ function handleClick() {
 }
 .icon-wrapper {
   flex-shrink: 0;
-  width: 32px;
-  height: 32px;
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
+  background: var(--color-bg-secondary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 .favicon {
-  width: 32px;
-  height: 32px;
-  border-radius: 6px;
+  width: 28px;
+  height: 28px;
+  border-radius: 4px;
 }
 .icon-fallback {
-  width: 32px;
-  height: 32px;
-  border-radius: 6px;
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -193,10 +208,12 @@ function handleClick() {
   display: flex;
   gap: 4px;
   opacity: 0;
-  transition: opacity var(--transition);
+  transform: scale(0.85);
+  transition: opacity var(--transition), transform var(--transition);
 }
 .card:hover .card-actions {
   opacity: 1;
+  transform: scale(1);
 }
 .action-btn {
   display: flex;
@@ -205,11 +222,13 @@ function handleClick() {
   width: 28px;
   height: 28px;
   border-radius: var(--radius-sm);
-  background: var(--color-surface);
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
   border: 1px solid var(--color-border);
   color: var(--color-text-secondary);
   cursor: pointer;
-  transition: all var(--transition);
+  transition: all var(--transition-fast);
 }
 .action-btn svg {
   width: 14px;
@@ -218,6 +237,10 @@ function handleClick() {
 .action-btn:hover {
   color: var(--color-accent);
   border-color: var(--color-accent);
+  transform: scale(1.05);
+}
+.action-btn:active {
+  transform: scale(0.92);
 }
 .action-btn.is-pinned {
   color: var(--color-accent);
@@ -228,8 +251,24 @@ function handleClick() {
 }
 
 @media (max-width: 768px) {
+  .card {
+    padding: 12px;
+  }
   .card-actions {
     opacity: 1;
+    transform: scale(1);
+    background: rgba(255, 255, 255, 0.7);
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+    border-radius: var(--radius-sm);
+    padding: 2px;
+  }
+  .action-btn {
+    min-width: 32px;
+    min-height: 32px;
+  }
+  .card:active {
+    transform: scale(0.98);
   }
 }
 </style>

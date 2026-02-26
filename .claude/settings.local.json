@@ -10,7 +10,11 @@
       "mcp__chrome-devtools__navigate_page",
       "mcp__chrome-devtools__take_screenshot",
       "Bash(pnpm add vue-draggable-plus)",
-      "Bash(npm install:*)"
+      "Bash(npm install:*)",
+      "mcp__ai_easyDb__easydb_get_schema",
+      "mcp__ai_easyDb__easydb_list_apis",
+      "mcp__ai_easyDb__easydb_create_api",
+      "mcp__ai_easyDb__easydb_test_api"
     ]
   }
 }

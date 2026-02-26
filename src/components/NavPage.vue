@@ -400,9 +400,11 @@ onMounted(loadLinks)
               @update="onPinnedDragEnd"
             >
               <LinkCard
-                v-for="link in pinnedLinks"
+                v-for="(link, idx) in pinnedLinks"
                 :key="link.id"
                 :link="link"
+                :style="{ animationDelay: `${idx * 40}ms` }"
+                class="card-stagger"
                 @edit="openEditModal"
                 @delete="handleDelete"
                 @toggle-pin="handleTogglePin"
@@ -449,9 +451,11 @@ onMounted(loadLinks)
                 @update="() => onLinkDragEnd(section)"
               >
                 <LinkCard
-                  v-for="link in section.links"
+                  v-for="(link, idx) in section.links"
                   :key="link.id"
                   :link="link"
+                  :style="{ animationDelay: `${idx * 40}ms` }"
+                  class="card-stagger"
                   @edit="openEditModal"
                   @delete="handleDelete"
                   @toggle-pin="handleTogglePin"
@@ -504,14 +508,12 @@ onMounted(loadLinks)
   top: 0;
   z-index: 30;
   background: var(--color-surface);
-  border-bottom: 1px solid var(--color-border);
   box-shadow: var(--shadow-sm);
 }
 .header--glass {
   background: rgba(255, 255, 255, 0.75);
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
-  border-bottom-color: rgba(255, 255, 255, 0.2);
 }
 .header-inner {
   max-width: 1280px;
@@ -540,8 +542,8 @@ onMounted(loadLinks)
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 34px;
-  height: 34px;
+  width: 36px;
+  height: 36px;
   border-radius: var(--radius-sm);
   color: var(--color-text-secondary);
   cursor: pointer;
@@ -559,20 +561,24 @@ onMounted(loadLinks)
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 34px;
-  height: 34px;
+  width: 36px;
+  height: 36px;
   border-radius: var(--radius-sm);
   background: var(--color-primary);
   color: #fff;
   cursor: pointer;
-  transition: background var(--transition);
+  transition: background var(--transition), transform var(--transition);
 }
 .add-btn svg {
   width: 18px;
   height: 18px;
+  transition: transform var(--transition);
 }
 .add-btn:hover {
   background: var(--color-accent);
+}
+.add-btn:hover svg {
+  transform: rotate(90deg);
 }
 .user-info {
   display: flex;
@@ -588,8 +594,8 @@ onMounted(loadLinks)
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 32px;
-  height: 32px;
+  width: 36px;
+  height: 36px;
   border-radius: var(--radius-sm);
   color: var(--color-text-secondary);
   cursor: pointer;
@@ -617,6 +623,7 @@ onMounted(loadLinks)
 .search-hero {
   max-width: 620px;
   margin: 8px auto 36px;
+  animation: slideDown 0.4s ease both;
 }
 .search-hero--glass .search-form {
   background: rgba(255, 255, 255, 0.8);
@@ -668,11 +675,16 @@ onMounted(loadLinks)
   border: 1.5px solid var(--color-border);
   border-radius: 28px;
   box-shadow: var(--shadow-sm);
-  transition: border-color var(--transition), box-shadow var(--transition);
+  transition: border-color var(--transition), box-shadow var(--transition), transform var(--transition);
+}
+.search-form:hover {
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-md);
 }
 .search-form:focus-within {
   border-color: var(--color-accent);
   box-shadow: 0 0 0 3px rgba(212, 175, 55, 0.12), var(--shadow-md);
+  transform: translateY(-1px);
 }
 .search-main-input {
   flex: 1;
@@ -700,7 +712,7 @@ onMounted(loadLinks)
   color: #fff;
   cursor: pointer;
   flex-shrink: 0;
-  transition: background var(--transition);
+  transition: background var(--transition), transform var(--transition);
 }
 .search-submit svg {
   width: 18px;
@@ -708,6 +720,7 @@ onMounted(loadLinks)
 }
 .search-submit:hover {
   background: var(--color-accent);
+  transform: rotate(15deg);
 }
 
 /* Loading */
@@ -735,12 +748,14 @@ onMounted(loadLinks)
   text-align: center;
   padding: 60px 20px;
   color: var(--color-text-secondary);
+  animation: fadeInUp 0.4s ease both;
 }
 .empty-icon {
-  width: 48px;
-  height: 48px;
+  width: 64px;
+  height: 64px;
   margin-bottom: 16px;
-  opacity: 0.5;
+  opacity: 0.4;
+  color: var(--color-accent);
 }
 .empty-state p {
   font-size: 1rem;
@@ -750,14 +765,15 @@ onMounted(loadLinks)
   padding: 10px 24px;
   background: var(--color-primary);
   color: #fff;
-  border-radius: var(--radius-sm);
+  border-radius: var(--radius-md);
   font-weight: 600;
   font-size: 0.9rem;
   cursor: pointer;
-  transition: background var(--transition);
+  transition: background var(--transition), transform var(--transition-fast);
 }
 .add-first-btn:hover {
   background: var(--color-accent);
+  transform: translateY(-1px);
 }
 
 /* Sections */
@@ -773,6 +789,18 @@ onMounted(loadLinks)
   display: flex;
   align-items: center;
   gap: 8px;
+  position: relative;
+  padding-bottom: 8px;
+}
+.section-title::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 32px;
+  height: 2px;
+  background: var(--color-accent);
+  border-radius: 1px;
 }
 .section-icon {
   width: 18px;
@@ -782,6 +810,9 @@ onMounted(loadLinks)
 .title--glass {
   color: rgba(255, 255, 255, 0.9);
   text-shadow: 0 1px 4px rgba(0, 0, 0, 0.3);
+}
+.title--glass::after {
+  background: rgba(255, 255, 255, 0.6);
 }
 
 /* Drag handle */
@@ -806,6 +837,11 @@ onMounted(loadLinks)
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
   gap: 14px;
+}
+
+/* Card stagger animation */
+.card-stagger {
+  animation: fadeInUp 0.35s ease both;
 }
 
 /* Drag states */
@@ -843,6 +879,33 @@ onMounted(loadLinks)
   }
   .section-drag-handle {
     opacity: 0.5;
+  }
+  .section-title {
+    font-size: 0.9rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .content {
+    padding: 16px 12px 36px;
+  }
+  .engine-tab {
+    font-size: 0.78rem;
+    padding: 4px 12px;
+  }
+  .link-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 8px;
+  }
+  .search-main-input {
+    padding: 10px 0 10px 16px;
+    font-size: 0.9rem;
+  }
+  .icon-btn,
+  .add-btn,
+  .logout-btn {
+    min-width: 44px;
+    min-height: 44px;
   }
 }
 </style>

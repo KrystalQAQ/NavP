@@ -15,6 +15,7 @@ const note = ref('')
 const pinned = ref(false)
 const error = ref('')
 const titleInput = ref(null)
+const visible = ref(false)
 
 const isEditing = !!props.link
 
@@ -27,14 +28,20 @@ onMounted(() => {
     pinned.value = !!props.link.pinned
   }
   nextTick(() => {
+    visible.value = true
     titleInput.value?.focus()
   })
 })
 
 function handleOverlayClick(e) {
   if (e.target === e.currentTarget) {
-    emit('close')
+    handleClose()
   }
+}
+
+function handleClose() {
+  visible.value = false
+  setTimeout(() => emit('close'), 200)
 }
 
 function handleSubmit() {
@@ -61,91 +68,129 @@ function handleSubmit() {
 }
 
 function handleKeydown(e) {
-  if (e.key === 'Escape') emit('close')
+  if (e.key === 'Escape') handleClose()
 }
 </script>
 
 <template>
-  <div class="modal-overlay" @click="handleOverlayClick" @keydown="handleKeydown">
-    <div class="modal" role="dialog" aria-labelledby="modal-title">
-      <div class="modal-header">
-        <h2 id="modal-title">{{ isEditing ? '编辑链接' : '添加链接' }}</h2>
-        <button class="close-btn" @click="emit('close')" aria-label="关闭">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="M18 6 6 18M6 6l12 12" />
-          </svg>
-        </button>
-      </div>
-
-      <form class="modal-body" @submit.prevent="handleSubmit">
-        <div class="form-group">
-          <label for="link-title">标题</label>
-          <input
-            id="link-title"
-            ref="titleInput"
-            v-model="title"
-            type="text"
-            placeholder="网站名称"
-          />
-        </div>
-
-        <div class="form-group">
-          <label for="link-url">URL</label>
-          <input
-            id="link-url"
-            v-model="url"
-            type="text"
-            placeholder="https://example.com"
-          />
-        </div>
-
-        <div class="form-row">
-          <div class="form-group form-group-flex">
-            <label for="link-category">分类</label>
-            <input
-              id="link-category"
-              v-model="category"
-              type="text"
-              placeholder="未分类"
-              list="category-list"
-            />
-            <datalist id="category-list">
-              <option v-for="cat in categories" :key="cat" :value="cat" />
-            </datalist>
+  <Transition name="overlay">
+    <div
+      v-if="visible"
+      class="modal-overlay"
+      @click="handleOverlayClick"
+      @keydown="handleKeydown"
+    >
+      <Transition name="modal" appear>
+        <div class="modal" role="dialog" aria-labelledby="modal-title">
+          <div class="accent-bar"></div>
+          <div class="modal-header">
+            <h2 id="modal-title">{{ isEditing ? '编辑链接' : '添加链接' }}</h2>
+            <button class="close-btn" @click="handleClose" aria-label="关闭">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M18 6 6 18M6 6l12 12" />
+              </svg>
+            </button>
           </div>
 
-          <div v-if="isEditing" class="form-group checkbox-group">
-            <label class="checkbox-label">
-              <input type="checkbox" v-model="pinned" />
-              <span>置顶</span>
-            </label>
-          </div>
-        </div>
+          <form class="modal-body" @submit.prevent="handleSubmit">
+            <div class="form-group">
+              <label for="link-title">标题</label>
+              <input
+                id="link-title"
+                ref="titleInput"
+                v-model="title"
+                type="text"
+                placeholder="网站名称"
+              />
+            </div>
 
-        <div class="form-group">
-          <label for="link-note">备注</label>
-          <textarea
-            id="link-note"
-            v-model="note"
-            placeholder="简短描述（可选）"
-            rows="2"
-          />
-        </div>
+            <div class="form-group">
+              <label for="link-url">URL</label>
+              <input
+                id="link-url"
+                v-model="url"
+                type="text"
+                placeholder="https://example.com"
+              />
+            </div>
 
-        <div v-if="error" class="error-msg">{{ error }}</div>
+            <div class="form-row">
+              <div class="form-group form-group-flex">
+                <label for="link-category">分类</label>
+                <input
+                  id="link-category"
+                  v-model="category"
+                  type="text"
+                  placeholder="未分类"
+                  list="category-list"
+                />
+                <datalist id="category-list">
+                  <option v-for="cat in categories" :key="cat" :value="cat" />
+                </datalist>
+              </div>
 
-        <div class="modal-footer">
-          <button type="button" class="btn-cancel" @click="emit('close')">
-            取消
-          </button>
-          <button type="submit" class="btn-save">保存</button>
+              <div v-if="isEditing" class="form-group checkbox-group">
+                <label class="checkbox-label">
+                  <input type="checkbox" v-model="pinned" />
+                  <span>置顶</span>
+                </label>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label for="link-note">备注</label>
+              <textarea
+                id="link-note"
+                v-model="note"
+                placeholder="简短描述（可选）"
+                rows="2"
+              />
+            </div>
+
+            <div v-if="error" class="error-msg">{{ error }}</div>
+
+            <div class="modal-footer">
+              <button type="button" class="btn-cancel" @click="handleClose">
+                取消
+              </button>
+              <button type="submit" class="btn-save">保存</button>
+            </div>
+          </form>
         </div>
-      </form>
+      </Transition>
     </div>
-  </div>
+  </Transition>
 </template>
 
 <style scoped>
+/* Overlay transitions */
+.overlay-enter-active {
+  transition: opacity 0.2s ease;
+}
+.overlay-leave-active {
+  transition: opacity 0.15s ease;
+}
+.overlay-enter-from,
+.overlay-leave-to {
+  opacity: 0;
+}
+
+/* Modal transitions */
+.modal-enter-active {
+  transition: opacity 0.25s cubic-bezier(0.16, 1, 0.3, 1), transform 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.modal-leave-active {
+  transition: opacity 0.15s ease, transform 0.15s ease;
+}
+.modal-enter-from {
+  opacity: 0;
+  transform: scale(0.95) translateY(10px);
+}
+.modal-leave-to {
+  opacity: 0;
+  transform: scale(0.95);
+}
+
 .modal-overlay {
   position: fixed;
   inset: 0;
@@ -159,11 +204,24 @@ function handleKeydown(e) {
 }
 .modal {
   background: var(--color-surface);
-  border-radius: var(--radius-lg);
+  border-radius: var(--radius-xl);
   width: 100%;
   max-width: 460px;
+  max-height: 90vh;
   box-shadow: var(--shadow-lg);
   overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+}
+.accent-bar {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: linear-gradient(90deg, var(--color-accent), var(--color-accent-hover));
+  z-index: 1;
 }
 .modal-header {
   display: flex;
@@ -196,6 +254,8 @@ function handleKeydown(e) {
 }
 .modal-body {
   padding: 20px 24px 24px;
+  overflow-y: auto;
+  flex: 1;
 }
 .form-group {
   margin-bottom: 16px;
@@ -210,14 +270,14 @@ function handleKeydown(e) {
 .form-group input[type='text'],
 .form-group textarea {
   width: 100%;
-  padding: 9px 12px;
+  padding: 10px 14px;
   border: 1px solid var(--color-border);
-  border-radius: var(--radius-sm);
+  border-radius: var(--radius-md);
   font-size: 0.9rem;
   color: var(--color-text);
   background: var(--color-surface);
   outline: none;
-  transition: border-color var(--transition);
+  transition: border-color var(--transition), box-shadow var(--transition);
   resize: vertical;
 }
 .form-group input:focus,
@@ -253,6 +313,9 @@ function handleKeydown(e) {
   color: var(--color-error);
   font-size: 0.85rem;
   margin-bottom: 16px;
+  padding: 8px 12px;
+  background: rgba(239, 68, 68, 0.08);
+  border-radius: var(--radius-sm);
 }
 .modal-footer {
   display: flex;
@@ -262,7 +325,7 @@ function handleKeydown(e) {
 .btn-cancel {
   padding: 9px 20px;
   border: 1px solid var(--color-border);
-  border-radius: var(--radius-sm);
+  border-radius: var(--radius-md);
   color: var(--color-text-secondary);
   font-weight: 500;
   font-size: 0.9rem;
@@ -277,23 +340,53 @@ function handleKeydown(e) {
   background: var(--color-primary);
   color: #fff;
   border: none;
-  border-radius: var(--radius-sm);
+  border-radius: var(--radius-md);
   font-weight: 600;
   font-size: 0.9rem;
   cursor: pointer;
-  transition: background var(--transition);
+  transition: background var(--transition), transform var(--transition-fast);
 }
 .btn-save:hover {
   background: var(--color-accent);
 }
+.btn-save:active {
+  transform: scale(0.97);
+}
 
 @media (max-width: 500px) {
+  .modal-overlay {
+    align-items: flex-end;
+    padding: 0;
+  }
   .modal {
     max-width: 100%;
+    border-radius: var(--radius-xl) var(--radius-xl) 0 0;
+    max-height: 90vh;
+  }
+  .modal-enter-from {
+    opacity: 0;
+    transform: translateY(100%);
+  }
+  .modal-leave-to {
+    opacity: 0;
+    transform: translateY(100%);
+  }
+  .modal-enter-active {
+    transition: opacity 0.25s ease, transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+  .modal-leave-active {
+    transition: opacity 0.15s ease, transform 0.2s ease;
   }
   .form-row {
     flex-direction: column;
     gap: 0;
+  }
+  .form-group input[type='text'],
+  .form-group textarea {
+    padding: 12px 14px;
+  }
+  .modal-body {
+    padding: 20px 20px 24px;
   }
 }
 </style>

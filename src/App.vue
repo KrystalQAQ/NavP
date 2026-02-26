@@ -7,6 +7,7 @@ import NavPage from './components/NavPage.vue'
 const token = ref(localStorage.getItem('nav_token') || '')
 const user = ref(null)
 const loading = ref(true)
+const loadingFadeOut = ref(false)
 
 provide('token', token)
 provide('user', user)
@@ -23,7 +24,11 @@ async function checkAuth() {
     token.value = ''
     localStorage.removeItem('nav_token')
   }
-  loading.value = false
+  loadingFadeOut.value = true
+  setTimeout(() => {
+    loading.value = false
+    loadingFadeOut.value = false
+  }, 300)
 }
 
 function onLogin(data) {
@@ -43,11 +48,13 @@ onMounted(checkAuth)
 </script>
 
 <template>
-  <div v-if="loading" class="loading-screen">
+  <div v-if="loading" class="loading-screen" :class="{ 'fade-out': loadingFadeOut }">
     <div class="spinner"></div>
   </div>
-  <LoginPage v-else-if="!user" @login="onLogin" />
-  <NavPage v-else @logout="onLogout" />
+  <Transition name="page" mode="out-in" v-else>
+    <LoginPage v-if="!user" key="login" @login="onLogin" />
+    <NavPage v-else key="nav" @logout="onLogout" />
+  </Transition>
 </template>
 
 <style scoped>
@@ -56,6 +63,10 @@ onMounted(checkAuth)
   align-items: center;
   justify-content: center;
   min-height: 100vh;
+  transition: opacity 0.3s ease;
+}
+.loading-screen.fade-out {
+  opacity: 0;
 }
 .spinner {
   width: 32px;
@@ -69,5 +80,21 @@ onMounted(checkAuth)
   to {
     transform: rotate(360deg);
   }
+}
+
+/* Page transition */
+.page-enter-active {
+  transition: opacity 0.3s ease, transform 0.3s ease;
+}
+.page-leave-active {
+  transition: opacity 0.2s ease, transform 0.2s ease;
+}
+.page-enter-from {
+  opacity: 0;
+  transform: translateY(10px);
+}
+.page-leave-to {
+  opacity: 0;
+  transform: translateY(-10px);
 }
 </style>
